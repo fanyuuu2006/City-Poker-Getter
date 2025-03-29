@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import time
 import requests
 os.makedirs("./src/json", exist_ok=True)
 
@@ -73,8 +72,6 @@ for row in rankingBountyData["data"]["rows"]:
         print(f"請求 resume 失敗 (pokerFansId: {pokerFansId}): {e}")
         continue  # 繼續處理下一個玩家，不會終止整個程式
 
-    # 限制請求頻率，避免被封鎖
-    time.sleep(0.1)
 
 # 確保 pokerFansIdResume["data"] 不是空的才寫入 JSON
 if pokerFansIdResume["datas"]:
@@ -118,10 +115,7 @@ for data in pokerFansIdResume["datas"]:
             print(f"警告: 無法解析比賽名稱 '{resume['tournamentName']}'")
 
 for item in tournamentDatas["datas"]:
-    if item["fee"] in bonus:
-        item["bonus"] = bonus[item["fee"]]* item["times"]
-    else: 
-        print(f"未擁有 {item["fee"]} 的獎金資料")
+    item["bonus"] = bonus.get(item["fee"], 0) * item["times"]
 
         
 if tournamentDatas["datas"]:
