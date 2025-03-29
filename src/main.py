@@ -118,7 +118,10 @@ for data in pokerFansIdResume["datas"]:
             print(f"警告: 無法解析比賽名稱 '{resume['tournamentName']}'")
 
 for item in tournamentDatas["datas"]:
-    item["bonus"] = bonus.get(item["fee"], 0) * item["times"]
+    if item["fee"] in bonus:
+        item["bonus"] = bonus[item["fee"]]* item["times"]
+    else: 
+        print(f"未擁有 {item["fee"]} 的獎金資料")
 
         
 if tournamentDatas["datas"]:
