@@ -3,9 +3,9 @@ import os
 import sys
 import time
 import requests
+os.makedirs("./src/json", exist_ok=True)
 
-result = dict()
-result["data"] = list()
+pokerFansIdResume = {"datas": []}
 
 # 設定 API 參數
 evenBeginTime = "2025-03-24"
@@ -57,7 +57,7 @@ for row in rankingBountyData["data"]["rows"]:
             print(f"警告: 玩家 {pokerFansId} 沒有對應的 resume 資料，跳過")
             continue
 
-        result["data"].append({
+        pokerFansIdResume["datas"].append({
             "pokerFansId": pokerFansId,
             "resume": [
                 {
@@ -74,17 +74,60 @@ for row in rankingBountyData["data"]["rows"]:
         continue  # 繼續處理下一個玩家，不會終止整個程式
 
     # 限制請求頻率，避免被封鎖
-    time.sleep(0.5)
+    time.sleep(0.1)
 
-# 確保 result["data"] 不是空的才寫入 JSON
-if result["data"]:
-    result["total"] = len(result["data"])  # 資料筆數
+# 確保 pokerFansIdResume["data"] 不是空的才寫入 JSON
+if pokerFansIdResume["datas"]:
+    pokerFansIdResume["total"] = len(pokerFansIdResume["datas"])  # 資料筆數
     try:
-        os.makedirs("./src/json", exist_ok=True)
-        with open("./src/json/result.json", "w", encoding="utf-8") as file:
-            json.dump(result, file, indent=4, ensure_ascii=False)
-        print("JSON 檔案已成功儲存")
+        with open("./src/json/pokerFansIdResume.json", "w", encoding="utf-8") as file:
+            json.dump(pokerFansIdResume, file, indent=4, ensure_ascii=False)
+        print("pokerFansIdResume.json 檔案已成功儲存")
     except Exception as e:
-        print(f"JSON 儲存失敗: {type(e).__name__}: {e}")
+        print(f"pokerFansIdResume.json 儲存失敗: {type(e).__name__}: {e}")
+else:
+    print("沒有可儲存的數據，pokerFansIdResume.json 檔案未建立")
+    
+
+
+bonus = {
+    600: 50,
+    1200: 50,
+    1700: 50,
+    2300: 50,
+    3400: 50,
+    6600: 100,
+    11000: 150,
+    22000: 250,
+    33000: 400,
+    54000: 500,
+}
+
+tournamentDatas = {"datas": []}
+
+for data in pokerFansIdResume["datas"]:
+    for resume in data["resume"]:
+        try:
+            fee = int(resume["tournamentName"].split("#")[0].split("-")[0].split(" ")[0].replace("TLT", "").replace("限時錦標賽", ""))
+            found = next((item for item in tournamentDatas["datas"] if item["fee"] == fee), None)
+            if found:
+                found["times"] += 1
+            else:
+                tournamentDatas["datas"].append({"fee": fee, "times": 1})
+        except ValueError:
+            print(f"警告: 無法解析比賽名稱 '{resume['tournamentName']}'")
+
+for item in tournamentDatas["datas"]:
+    item["bonus"] = bonus.get(item["fee"], 0) * item["times"]
+
+        
+if tournamentDatas["datas"]:
+    tournamentDatas["totalBonus"] = sum(item["bonus"] for item in tournamentDatas["datas"])
+    try:
+        with open("./src/json/tournamentDatas.json", "w", encoding="utf-8") as file:
+            json.dump(tournamentDatas, file, indent=4, ensure_ascii=False)
+        print("tournamentDatas.json 檔案已成功儲存")
+    except Exception as e:
+        print(f"tournamentDatas.json 儲存失敗: {type(e).__name__}: {e}")
 else:
     print("沒有可儲存的數據，JSON 檔案未建立")
